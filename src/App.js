@@ -1,47 +1,69 @@
-import React, { Component } from 'react';
-import Unsplash, { toJson } from 'unsplash-js';
+// import ReactDOM from "react-dom";
+import React, { Fragment, useEffect, useState } from "react";
+// import "./style.css";
+import { createApi } from "unsplash-js";
 
+const api = createApi({
+  // Don't forget to set your access token here!
+  // See https://unsplash.com/developers
+  accessKey: "cp2mgkJSVuPMqG1ufvl_dmdImfc3K8KjE5Z4HtBDFbw"
+});
 
-const ACCESSKEY = 'cp2mgkJSVuPMqG1ufvl_dmdImfc3K8KjE5Z4HtBDFbw';
+const PhotoComp = ({ photo }) => {
+  const { user, urls } = photo;
 
-const unsplash = new Unsplash({ accessKey: ACCESSKEY });
+  return (
+    <Fragment>
+      <img className="img" src={urls.regular} />
+      <a
+        className="credit"
+        target="_blank"
+        href={`https://unsplash.com/@${user.username}`}
+      >
+        {user.name}
+      </a>
+    </Fragment>
+  );
+};
 
-class App extends Component{
-  constructor(){
-    super();
-    this.state = {
-      picture : "https://images.unsplash.com/photo-1540783329546-80b728bf7bf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1275&q=80"
-    }
+const App = () => {
+  const [data, setPhotosResponse] = useState(null);
+
+  useEffect(() => {
+    api.search
+      .getPhotos({ query: "cat", orientation: "landscape" })
+      .then(result => {
+        setPhotosResponse(result);
+      })
+      .catch(() => {
+        console.log("something went wrong!");
+      });
+  }, []);
+
+  if (data === null) {
+    return <div>Loading...</div>;
+  } else if (data.errors) {
+    return (
+      <div>
+        <div>{data.errors[0]}</div>
+        <div>PS: Make sure to set your access token!</div>
+      </div>
+    );
+  } else {
+    return (
+      <div className="feed">
+        <ul className="columnUl">
+          {data.response.results.map(photo => (
+            <li key={photo.id} className="li">
+              <PhotoComp photo={photo} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   }
-
-  catchErr = () => {
-    unsplash.users.profile("naoufal")
-    .catch(err => {
-      console.log("err", err)
-    });
-  }
-
-  // photos.getRandomPhoto({ query, username, featured })
-  getRandomPhoto = () => {
-    unsplash.photos.getRandomPhoto({ username: "naoufal" })
-    .then(toJson)
-    .then(json => {
-      console.log("json", json.links.html)
-      this.setState({picture : json.links.html})
-    });
-  }
-
-  componentDidMount(){
-    this.getRandomPhoto();
-  }
-
-
-  // 怎麼顯示抓回來的圖
-  render(){
-    return(<img src={this.state.picture}></img>)
-  }
-}
-
-
+};
 
 export default App;
+
+// ReactDOM.render(<Home />, document.getElementById("root"));
